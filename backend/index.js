@@ -7,6 +7,7 @@ const morgan = require("morgan")
 const cors = require("cors")
 const UserRouter = require("./routers/UserRouter")
 const AdminRouter = require("./routers/AdminRouter")
+const path = require("path")
 
 app.use(morgan("dev"))
 
