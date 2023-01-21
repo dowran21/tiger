@@ -32,8 +32,13 @@ app.use(cors({
     credentials: true
 }));
 
+app.use(express.static(path.join(_dirname, "build")))
 
 app.use("/api/user", UserRouter);
 app.use('/api/admin', AdminRouter)
+
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.listen(PORT, ()=>console.log(`listening on port ${PORT}`))
