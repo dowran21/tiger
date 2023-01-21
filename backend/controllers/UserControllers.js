@@ -1,0 +1,195 @@
+const database = require("../db/index.js")
+const {status} = require("../utils/status.js")
+const {GenerateAdminAccessToken, GenerateAdminRefreshToken} = require("../utils/index")
+
+const UserLogin = async (req, res) =>{
+    // console.log(response)
+    const {name, password} = req.body;
+    console.log(req.body)
+    const query_text = `
+        SELECT * FROM sales_mans WHERE name = '${name}' AND password = '${password}'
+    `
+    try {
+        const {rows} = await database.query(query_text)
+        if(!rows.length){
+            return res.status(status.notfound).send(false)
+        }
+        const user = {id:rows[0]?.id, name:rows[0]?.name, code:rows[0]?.code}
+        const access_token = await GenerateAdminAccessToken(user)
+        const refresh_token = await GenerateAdminRefreshToken(user)
+        return res.status(status.success).json({access_token, refresh_token, data:user})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const LoadUser = async (req, res) =>{
+    const user = req.user;
+    const access_token = await GenerateAdminAccessToken(user)
+    const refresh_token = await GenerateAdminRefreshToken(user)
+    return res.status(status.success).json({access_token, refresh_token, data:user})
+}
+
+const GetUserClients = async (req, res) =>{
+    const id = req.user.id;
+    const query_text = `
+        SELECT 
+            c.name
+            , c.phone_number
+            , c.address
+            , c.code
+            , c.id
+            , c.position[0] AS lat
+            , c.position[1] AS lng
+            , 15::text AS debit
+            , 12::text AS kredit
+
+        FROM clients c
+        INNER JOIN sls_man_clients smc
+            ON smc.client_id = c.id AND smc.sls_man_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetProducts = async (req, res)=>{
+    const {page, limit, search} = req.query
+    let offSet = ``
+    if(page && limit){
+        offSet = `OFFSET ${(page-1)*limit} LIMIT ${limit}`
+    }
+    let wherePart = ``
+    if(search){
+        wherePart += `AND i.name ~* '${search}'`
+    }
+    const user_id = req.user?.id;
+    const query_text = `
+        SELECT i.name, i.code, m.measurement, price, i.stock, c.code AS currency_name, i.id::integer, 0::integer AS count
+        FROM items i
+            INNER JOIN measurements m
+                ON m.id = i.measurement_id AND i.firm_id = m.firm_id
+            INNER JOIN currency c
+                ON c.id = i.currency AND c.firm_id = i.firm_id
+            INNER JOIN sls_man_firms sl
+                ON sl.firm_id = i.firm_id AND sl.sls_man_id = ${user_id}
+            WHERE i.id > 0 ${wherePart}
+        ${offSet}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetFirms = async (req, res) =>{
+    const query_text = `
+        SELECT id AS value, name AS label, code FROM firms
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        // let firms = {}
+        // rows.map(item => firms[item.id] = `${item.code} ${item.name} `)
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const CreateOrder = async (req, res) =>{
+    const {products, client_id} = req.body;
+    const sls_man_id = req.user.id;
+    // console.log(req.body)
+    console.log(products, client_id)
+    const query_text = `
+        WITH inserted AS (
+            INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status)
+            VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
+                (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0) RETURNing *
+        ), inserted_products AS (
+            INSERT INTO order_items(item_id, order_id, price, count)
+            VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
+        ) SELECT id FROM inserted
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(query_text)
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetOrders = async (req, res) =>{
+    // const {id} = req.params;
+    const {id} = req.user
+    const query_text = `
+        SELECT o.id::text
+            , status::integer
+            , to_char(o.created_at, 'DD.MM.YYYY') AS created_at
+            , (SELECT sum(price)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
+            , c.name 
+        FROM orders o
+        INNER JOIN clients c
+            ON c.id = o.client_id 
+        WHERE sls_man_id = ${id} 
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
+const GetOrderByID = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        SELECT 
+            o.id
+            , o.created_at
+            , o.supervisor_observerd
+            , o.status
+            ,(SELECT json_agg(it) FROM (
+                SELECT 
+                    i.name
+                    , oi.price
+                    , oi.count
+                FROM items i
+                    INNER JOIN order_items oi
+                        ON oi.item_id = i.id AND oi.order_id = o.id
+            )it) AS items
+        FROM orders o
+            WHERE o.id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+module.exports = {
+    UserLogin,
+    LoadUser,
+    GetUserClients,
+    GetProducts,
+    GetFirms,
+    CreateOrder,
+    GetOrders,
+    GetOrderByID
+}
