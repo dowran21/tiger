@@ -33,7 +33,7 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.static(path.join(_dirname, "build")))
+app.use(express.static(path.join(__dirname, "build")))
 
 app.use("/api/user", UserRouter);
 app.use('/api/admin', AdminRouter)
