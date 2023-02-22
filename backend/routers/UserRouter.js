@@ -10,5 +10,6 @@ router.get('/get-products', VerifyAdminAccessToken, UserController.GetProducts);
 router.post("/create-order", VerifyAdminAccessToken, UserController.CreateOrder);
 router.get("/get-orders", VerifyAdminAccessToken, UserController.GetOrders);
 router.get("/get-order/:id",  UserController.GetOrderByID)
+router.post("/update-order/:id", UserController.EditOrder)
 
 module.exports = router;

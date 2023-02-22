@@ -106,28 +106,33 @@ const GetFirms = async (req, res) =>{
 }
 
 const CreateOrder = async (req, res) =>{
-    const {products, client_id, created_at} = req.body;
-    const sls_man_id = req.user.id;
-    // console.log(req.body)
-    console.log(products, client_id)
-    const query_text = `
-        WITH inserted AS (
-            INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at)
-            VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
-                (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "now()"}) RETURNing *
-        ), inserted_products AS (
-            INSERT INTO order_items(item_id, order_id, price, count)
-            VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
-        ) SELECT id FROM inserted
-    `
-    try {
-        await database.query(query_text, [])
-        return res.status(status.success).send(true)
-    } catch (e) {
-        console.log(query_text)
-        console.log(e)
-        return res.status(status.error).send(false)
-    }
+    const {orders} = req.body;
+    orders.map(async (order) => {
+        const {products, client_id, created_at} = order;
+        const sls_man_id = req.user.id;
+        // console.log(req.body)
+        console.log(products, client_id)
+        const query_text = `
+            WITH inserted AS (
+                INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at)
+                VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
+                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "now()"}) RETURNing *
+            ), inserted_products AS (
+                INSERT INTO order_items(item_id, order_id, price, count)
+                VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
+            ) SELECT id FROM inserted
+        `
+        try {
+            await database.query(query_text, [])
+            
+        } catch (e) {
+            console.log(query_text)
+            console.log(e)
+            return res.status(status.error).send(false)
+        }
+    })
+    return res.status(status.success).send(true)
+    
 }
 
 const GetOrders = async (req, res) =>{
@@ -167,6 +172,7 @@ const GetOrderByID = async (req, res) =>{
                     i.name
                     , oi.price
                     , oi.count
+                    , oi.id AS order_item_id
                 FROM items i
                     INNER JOIN order_items oi
                         ON oi.item_id = i.id AND oi.order_id = o.id
@@ -183,6 +189,26 @@ const GetOrderByID = async (req, res) =>{
     }
 }
 
+const EditOrder = async (req, res) =>{
+    const {id} = req.params;
+    const {products} = req.body;
+    const query_text = `
+        WITH ${products.map((item, index)=>`
+            updated${index} AS (
+                UPDATE order_items SET count = ${item.count} WHERE id = ${item.order_item_id}
+            )
+        `).join(",")}
+         SELECT 1
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     UserLogin,
     LoadUser,
@@ -191,5 +217,6 @@ module.exports = {
     GetFirms,
     CreateOrder,
     GetOrders,
-    GetOrderByID
+    GetOrderByID,
+    EditOrder
 }
