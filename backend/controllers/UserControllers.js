@@ -106,7 +106,9 @@ const GetFirms = async (req, res) =>{
 }
 
 const CreateOrder = async (req, res) =>{
-    const {orders} = req.body;
+    let {orders} = req.body;
+    // orders = orders[0]
+    console.log(orders)
     orders.map(async (order) => {
         const {products, client_id, created_at} = order;
         const sls_man_id = req.user.id;
@@ -116,15 +118,15 @@ const CreateOrder = async (req, res) =>{
             WITH inserted AS (
                 INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at)
                 VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
-                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "now()"}) RETURNing *
+                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}) RETURNing *
             ), inserted_products AS (
                 INSERT INTO order_items(item_id, order_id, price, count)
                 VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
             ) SELECT id FROM inserted
         `
         try {
-            await database.query(query_text, [])
-            
+            const {rows} = await database.query(query_text, [])
+            console.log(rows[0].id)
         } catch (e) {
             console.log(query_text)
             console.log(e)
