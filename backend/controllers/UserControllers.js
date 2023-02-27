@@ -12,7 +12,8 @@ const UserLogin = async (req, res) =>{
     try {
         const {rows} = await database.query(query_text)
         if(!rows.length){
-            return res.status(status.notfound).send(false)
+            const message = {type:"manual", name:"phone", message:"Телефон или пароль неправильный"} 
+            return res.status(status.notfound).json(message)
         }
         const user = {id:rows[0]?.id, name:rows[0]?.name, code:rows[0]?.code}
         const access_token = await GenerateAdminAccessToken(user)
