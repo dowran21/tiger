@@ -69,6 +69,13 @@ CREATE TABLE currency(
     "name" VARCHAR NOT NULL
 );
 
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY NOT NULL,
+    "name" VARCHAR(500) NOT NULL,
+    logical_ref INTEGER NOT NULL,
+    lowlevelcode INTEGER NOT NULL
+);
+
 CREATE TABLE items (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     logical_ref BIGINT NOT NULL,
@@ -78,8 +85,10 @@ CREATE TABLE items (
     measurement_id INTEGER NOT NULL,
     price NUMERIC(7, 2) NOT NULL,
     currency SMALLINT NOT NULL,
+    category_id INTEGER NOT NULL,
     UNIQUE(firm_id, logical_ref),
 
+    CONSTRAINT category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT measurement_id_fk FOREIGN KEY (measurement_id) REFERENCES measurements(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT firm_id_fk FOREIGN KEY (firm_id) REFERENCES firms(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -197,3 +206,5 @@ CREATE TAbLE order_items (
 
     CONSTRAINT item_id_fk FOREIGN KEY (item_id) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+

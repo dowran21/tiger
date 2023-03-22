@@ -272,4 +272,67 @@ const Migrations = async () =>{
     }
 }
 
-Migrations()
+const SelectMigrations = async ()=>{
+    const select_query = `
+        SELECT  DISTINCT TOP 100000 
+
+    LGMAIN.LOGICALREF, LGMAIN.CODE, LGMAIN.NAME, 
+    LGMAIN.CARDTYPE, 
+    LGMAIN.ACTIVE, LGMAIN.CLASSTYPE, LGMAIN.LOWLEVELCODES1
+
+        FROM 
+
+            LG_001_ITEMS LGMAIN WITH(NOLOCK, INDEX = I001_ITEMS_I6)
+        LEFT OUTER JOIN 
+            LG_001_UNITSETF UNITSET WITH(NOLOCK) ON (LGMAIN.UNITSETREF  =  UNITSET.LOGICALREF) 
+    LEFT OUTER JOIN 
+            LG_001_UNITSETL USLINE WITH(NOLOCK) ON (UNITSET.LOGICALREF  =  USLINE.UNITSETREF) AND (USLINE.MAINUNIT = 1)
+
+        WHERE
+            (LGMAIN.CLASSTYPE = 20) AND (LGMAIN.ACTIVE = 0)
+            
+        ORDER BY 
+            LGMAIN.CLASSTYPE, LGMAIN.ACTIVE, LGMAIN.CODE, LGMAIN.LOGICALREF, LGMAIN.LOWLEVELCODES1
+    `
+    try {
+        const resp = await ms_db.query(select_query);
+        const data = resp?.recordsets[0]
+        const add_category = `
+            INSERT INTO categories (name, logical_ref, lowlevelcode) VALUES 
+            ${data?.map(item=> `('${item.NAME}', ${item.LOGICALREF}, ${item.LOWLEVELCODES1} )`)}    
+     `
+     try {
+        await database.query(add_category, [])
+     } catch (e) {
+        console.log(e)
+     }
+     const select_products = `SELECT * FROM LG_001_ITEMS WHERE CARDTYPE = 1`;
+     try {
+        const resp2 = await ms_db.query(select_products);
+        const products = resp2.recordsets[0];
+        // console.log(resp2.recordsets)
+        console.log(products.length)
+        const add_product = `INSERT INTO items (code, logical_ref, name, firm_id, measurement_id, category_id) VALUES 
+        ${products.map(item => `('${item.CODE}', ${item.LOGICALREF}, '${item.NAME}', 2, 
+        (SELECT m.id FROM measurements m WHERE m.unitsetref = ${item.UNITSETREF} AND firm_id = 2), (SELECT id FROM categories WHERE lowlevelcode = ${item.LOWLEVELCODES1} ))
+        `).join(",")}
+        ON CONFLICT (firm_id, logical_ref) DO UPDATE SET category_id = EXCLUDED.category_id
+        `
+        try {
+            await database.query(add_product, [])
+        } catch (e) {
+            console.log(add_product)
+            console.log("hello error")
+            console.log(e)
+        }
+     } catch (e) {
+        console.log(e)
+     }
+        // console.log(resp)
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+// Migrations()
+SelectMigrations()

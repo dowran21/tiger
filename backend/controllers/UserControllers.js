@@ -60,7 +60,7 @@ const GetUserClients = async (req, res) =>{
 }
 
 const GetProducts = async (req, res)=>{
-    const {page, limit, search} = req.query
+    const {page, limit, search, category_id} = req.query
     let offSet = ``
     if(page && limit){
         offSet = `OFFSET ${(page-1)*limit} LIMIT ${limit}`
@@ -68,6 +68,9 @@ const GetProducts = async (req, res)=>{
     let wherePart = ``
     if(search){
         wherePart += `AND i.name ~* '${search}'`
+    }
+    if(category_id){
+        wherePart += ` AND i.category_id = ${category_id}`
     }
     const user_id = req.user?.id;
     const query_text = `
@@ -194,9 +197,11 @@ const GetOrderByID = async (req, res) =>{
 
 const EditOrder = async (req, res) =>{
     const {id} = req.params;
-    const {products} = req.body;
+    const products = req.body;
+    console.log(req.body)
+    console.log(products)
     const query_text = `
-        WITH ${products.map((item, index)=>`
+        WITH ${products?.map((item, index)=>`
             updated${index} AS (
                 UPDATE order_items SET count = ${item.count} WHERE id = ${item.order_item_id}
             )
@@ -212,6 +217,19 @@ const EditOrder = async (req, res) =>{
     }
 }
 
+const GetCategories = async (req, res) =>{
+    const query_text = `
+        SELECT * FROM categories
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     UserLogin,
     LoadUser,
@@ -221,5 +239,6 @@ module.exports = {
     CreateOrder,
     GetOrders,
     GetOrderByID,
-    EditOrder
+    EditOrder,
+    GetCategories
 }

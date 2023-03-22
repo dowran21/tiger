@@ -6,10 +6,11 @@ const {VerifyAdminAccessToken, VerifyAdminRefreshToken} = require("../middleware
 router.post('/login', UserController.UserLogin);
 router.get('/get-clients', VerifyAdminAccessToken, UserController.GetUserClients);
 router.get("/get-firms", VerifyAdminAccessToken, UserController.GetFirms);
-router.get('/get-products', VerifyAdminAccessToken, UserController.GetProducts);
+router.get('/get-products',  UserController.GetProducts);
 router.post("/create-order", VerifyAdminAccessToken, UserController.CreateOrder);
 router.get("/get-orders", VerifyAdminAccessToken, UserController.GetOrders);
 router.get("/get-order/:id",  UserController.GetOrderByID)
-router.post("/update-order/:id", UserController.EditOrder)
+router.post("/update-order/:id", UserController.EditOrder);
+router.get("/categories",  UserController.GetCategories)
 
 module.exports = router;
