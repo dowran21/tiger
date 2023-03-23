@@ -71,6 +71,8 @@ const GetProducts = async (req, res)=>{
     }
     if(category_id){
         wherePart += ` AND i.category_id = ${category_id}`
+    }else{
+        wherePart += ` AND i.category_id IS NULL`
     }
     const user_id = req.user?.id;
     const query_text = `
