@@ -203,6 +203,7 @@ CREATE TAbLE order_items (
     order_id INTEGER NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
     count SMALLINT NOT NULL,
+    supervisor_count SMALLINT NOT NULL DEFAULT 0,
 
     CONSTRAINT item_id_fk FOREIGN KEY (item_id) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE
 );

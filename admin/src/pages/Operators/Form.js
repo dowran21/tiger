@@ -18,7 +18,7 @@ function Form({visible, setCloseModal, form, values}){
 
     const token = useSelector(state => state.auth.token)
     const {handleSubmit, errors, setValue, getValues, watch, register, control, reset} = useForm({
-        resolver:yupResolver(schema(form))
+        // resolver:yupResolver(schema(form))
     })
     const {fields, append, remove, update} = useFieldArray({
         control,
@@ -46,6 +46,7 @@ function Form({visible, setCloseModal, form, values}){
     }, [visible])
 
     const onSubmit = (data) =>{
+        console.log("submit")
         if(form === "update"){
             let new_data = data.sls_mans?.filter(item => !item.usm_id)
             if(new_data.length){

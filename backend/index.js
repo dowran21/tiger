@@ -8,6 +8,7 @@ const cors = require("cors")
 const UserRouter = require("./routers/UserRouter")
 const AdminRouter = require("./routers/AdminRouter")
 const path = require("path")
+const SupervisorRouter = require("./routers/SupervisorRouter")
 
 app.use(morgan("dev"))
 
@@ -37,6 +38,7 @@ app.use(express.static(path.join(__dirname, "build")))
 
 app.use("/api/user", UserRouter);
 app.use('/api/admin', AdminRouter)
+app.use("/api/supervisor", SupervisorRouter)
 
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));

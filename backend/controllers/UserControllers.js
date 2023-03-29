@@ -181,6 +181,7 @@ const GetOrderByID = async (req, res) =>{
                     , oi.price
                     , oi.count
                     , oi.id AS order_item_id
+                    , oi.supervisor_count
                 FROM items i
                     INNER JOIN order_items oi
                         ON oi.item_id = i.id AND oi.order_id = o.id
