@@ -12,4 +12,6 @@ router.post("/update-order/:id", VerifyAdminAccessToken,SupervisorController.Upd
 
 router.get("/get-order/:id", VerifyAdminAccessToken, SupervisorController.GetOrderById)
 
+router.get("/get-clients", VerifyAdminAccessToken, SupervisorController.GetClients)
+
 module.exports = router

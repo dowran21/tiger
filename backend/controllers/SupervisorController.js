@@ -106,9 +106,40 @@ const GetOrderById = async (req, res) =>{
     }
 }
 
+const GetClients = async (req, res) =>{
+    const {id} = req.user;
+    // const id = 4
+    const query_text = `
+        SELECT 
+            c.name
+            , c.phone_number
+            , c.address
+            , c.code
+            , c.id
+            , c.position[0] AS lat
+            , c.position[1] AS lng
+            , 15::text AS debit
+            , 12::text AS kredit
+
+        FROM clients c
+        INNER JOIN sls_man_clients smc
+            ON smc.client_id = c.id
+        INNER JOIN user_sls_mans usm
+            ON usm.user_id = ${id} AND usm.sls_man_id = smc.sls_man_id
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     Login,
     GetOrders,
     UpdateOrder,
-    GetOrderById
+    GetOrderById,
+    GetClients
 }
