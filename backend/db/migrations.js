@@ -334,5 +334,43 @@ const SelectMigrations = async ()=>{
     }
 }
 
+const GroupOnHand = async ()=>{
+    const query_text = `
+        SELECT * FROM categories 
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        if(rows?.length){
+            rows.map(async (item)=>{
+                const ms_sql_query = `
+                SELECT  DISTINCT 
+                SUM(STITOTS.ONHAND) AS galany
+                
+                   FROM 
+                       
+               LG_001_01_STINVTOT STITOTS WITH(NOLOCK) 
+                       LEFT OUTER JOIN LG_001_ITEMS ITMSC WITH(NOLOCK) ON (STITOTS.STOCKREF  =  ITMSC.LOGICALREF)
+                
+                   WHERE 
+               
+                       (STITOTS.INVENNO = -1) AND (ITMSC.CLASSTYPE = 0) AND (ITMSC.LOWLEVELCODES1 = ${item.lowlevelcode})
+                   
+               
+               GROUP BY INVENNO
+                `
+                const resp = await ms_db.query(ms_sql_query)
+                const data = resp.recordsets[0]
+                await database.query(`UPDATE categories SET on_hand = ${data[0].galany} WHERE id = ${item.id}`,[] )
+            })
+           
+
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+GroupOnHand()
+
 // Migrations()
-SelectMigrations()
+// SelectMigrations()

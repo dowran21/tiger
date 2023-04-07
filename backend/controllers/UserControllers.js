@@ -136,11 +136,11 @@ const CreateOrder = async (req, res) =>{
         } catch (e) {
             console.log(query_text)
             console.log(e)
-            return res.status(status.error).send(false)
+            // continue m;
         }
     })
     return res.status(status.success).send(true)
-    
+        
 }
 
 const GetOrders = async (req, res) =>{
