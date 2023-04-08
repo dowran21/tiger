@@ -116,15 +116,17 @@ const CreateOrder = async (req, res) =>{
     // orders = orders[0]
     console.log(orders)
     orders.map(async (order) => {
-        const {products, client_id, created_at} = order;
+        const {products, client_id, created_at, discount} = order;
         const sls_man_id = req.user.id;
         // console.log(req.body)
         console.log(products, client_id)
         const query_text = `
             WITH inserted AS (
-                INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at)
+                INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount)
                 VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
-                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}) RETURNing *
+                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}
+                    , ${discount}
+                    ) RETURNing *
             ), inserted_products AS (
                 INSERT INTO order_items(item_id, order_id, price, count)
                 VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
@@ -175,6 +177,7 @@ const GetOrderByID = async (req, res) =>{
             , o.created_at
             , o.supervisor_observerd
             , o.status
+            , o.disocunt
             ,(SELECT json_agg(it) FROM (
                 SELECT 
                     i.name

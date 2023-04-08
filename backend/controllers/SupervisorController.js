@@ -53,12 +53,12 @@ const GetOrders = async (req, res) =>{
 
 const UpdateOrder = async (req, res) =>{
     const {id} = req.params;
-    const {products, status_id} = req.body;
+    const {products, status_id, discount} = req.body;
     console.log(req.body)
     console.log(products)
     const query_text = `
         WITH updated_order AS(
-            UPDATE orders SET status = ${status_id} WHERE id = ${id}
+            UPDATE orders SET status = ${status_id} , discount = ${discount} WHERE id = ${id}
          ) ${products?.length ? "," : ""} ${products?.map((item, index)=>`
             updated${index} AS (
                 UPDATE order_items SET supervisor_count = ${item.sp_count} WHERE id = ${item.order_item_id}
@@ -83,6 +83,7 @@ const GetOrderById = async (req, res) =>{
         , o.created_at
         , o.supervisor_observerd
         , o.status
+        , o.discount
         ,(SELECT json_agg(it) FROM (
             SELECT 
                 i.name
@@ -136,10 +137,48 @@ const GetClients = async (req, res) =>{
     }
 }
 
+const GetProducts = async (req, res)=>{
+    const {page, limit, search, category_id} = req.query
+    let offSet = ``
+    if(page && limit){
+        offSet = `OFFSET ${(page-1)*limit} LIMIT ${limit}`
+    }
+    let wherePart = ``
+    if(search){
+        wherePart += `AND i.name ~* '${search}'`
+    }
+    if(category_id){
+        wherePart += ` AND i.category_id = ${category_id}`
+    }else{
+        wherePart += ` AND i.category_id IS NULL`
+    }
+    const user_id = req.user?.id;
+    const query_text = `
+        SELECT i.name, i.code, m.measurement, price, i.stock, c.code AS currency_name, i.id::integer, 0::integer AS count
+        FROM items i
+            INNER JOIN measurements m
+                ON m.id = i.measurement_id AND i.firm_id = m.firm_id
+            INNER JOIN currency c
+                ON c.id = i.currency AND c.firm_id = i.firm_id
+            INNER JOIN user_firms uf
+                ON uf.firm_id = i.firm_id AND uf.user_id = ${user_id}
+            WHERE i.id > 0 ${wherePart}
+        ${offSet}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     Login,
     GetOrders,
     UpdateOrder,
     GetOrderById,
-    GetClients
+    GetClients,
+    GetProducts
 }

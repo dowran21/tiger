@@ -14,4 +14,6 @@ router.get("/get-order/:id", VerifyAdminAccessToken, SupervisorController.GetOrd
 
 router.get("/get-clients", VerifyAdminAccessToken, SupervisorController.GetClients)
 
+router.get("/get-products", VerifyAdminAccessToken, SupervisorController.GetProducts)
+
 module.exports = router
