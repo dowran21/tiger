@@ -1,9 +1,17 @@
 const database = require("../db/index.js")
 const {status} = require("../utils/status.js")
 const {GenerateAdminAccessToken, GenerateAdminRefreshToken} = require("../utils/index")
-// const path = require("path")
-// const admin = require("firebase-admin");
+const path = require("path")
+const admin = require("firebase-admin");
+require("dotenv").config()
 
+const FIREBASE_DATABASE_URL = "https://tiger-561c8-default-rtdb.firebaseio.com";
+const account = require(process.env.PATH_TO_PUSH)
+
+admin.initializeApp({
+    credential: admin.credential.cert(account),
+    databaseURL:FIREBASE_DATABASE_URL
+})
 
 
 const UserLogin = async (req, res) =>{
@@ -118,6 +126,7 @@ const GetFirms = async (req, res) =>{
 const CreateOrder = async (req, res) =>{
     let {orders} = req.body;
     // orders = orders[0]
+    const {id} = req.user
     console.log(orders)
     orders.map(async (order) => {
         const {products, client_id, created_at, discount} = order;
@@ -138,6 +147,20 @@ const CreateOrder = async (req, res) =>{
         `
         try {
             const {rows} = await database.query(query_text, [])
+            const select_query = `
+                SELECT * FROM users u 
+                    INNER JOIN user_sls_mans usm
+                        ON usm.sls_man_id = ${id} AND usm.user_id = u.id 
+            `
+            const us = await database.query(select_query, [])
+            if(us[0]){
+                const token = us[0]?.fcm_token;
+                const title = "Sargyt geldi";
+                const body = `Sargydy gormegi sizden hayysh edyarin`;
+                const data = {title:"hello", body:"hello", destination:"hello"}
+                const message = {data, notification: {body, title}}
+                admin.messaging().sendToDevice(token, message)
+            } 
             console.log(rows[0].id)
         } catch (e) {
             console.log(query_text)
