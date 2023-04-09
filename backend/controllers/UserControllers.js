@@ -153,8 +153,9 @@ const CreateOrder = async (req, res) =>{
                         ON usm.sls_man_id = ${id} AND usm.user_id = u.id 
             `
             const us = await database.query(select_query, [])
-            if(us[0]){
-                const token = us[0]?.fcm_token;
+            if(us?.rows[0]){
+                const user = us?.rows[0]
+                const token = user.fcm_token;
                 const title = "Sargyt geldi";
                 const body = `Sargydy gormegi sizden hayysh edyarin`;
                 const data = {title:"hello", body:"hello", destination:"hello"}
