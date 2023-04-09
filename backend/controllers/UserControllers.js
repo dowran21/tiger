@@ -138,7 +138,7 @@ const CreateOrder = async (req, res) =>{
                 INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount)
                 VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
                     (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}
-                    , ${discount}
+                    , ${discount ? discount : null}
                     ) RETURNing *
             ), inserted_products AS (
                 INSERT INTO order_items(item_id, order_id, price, count)
