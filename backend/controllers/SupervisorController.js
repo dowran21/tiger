@@ -3,7 +3,7 @@ const { ComparePassword, GenerateAdminAccessToken, GenerateAdminRefreshToken } =
 const { status } = require("../utils/status.js");
 
 const Login = async (req, res) =>{
-    const {name, password} = req.body;
+    const {name, password, fcm_token} = req.body;
     const query_text = `
         SELECT * FROM users WHERE role_id IN (2, 3) AND name = $1
     `
@@ -20,6 +20,7 @@ const Login = async (req, res) =>{
         const data = {id:user.id, role_id:user.role_id, name:user.name}
         const access_token = await GenerateAdminAccessToken(data);
         const refresh_token = await GenerateAdminRefreshToken(data);
+        await database.query(`UPDATE users SET fcm_token = '${fcm_token}' WHERE id = ${user.id}`)
         return res.status(status.success).json({access_token, refresh_token, data})
     } catch (e) {
         console.log(e)

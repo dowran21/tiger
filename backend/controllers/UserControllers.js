@@ -1,6 +1,10 @@
 const database = require("../db/index.js")
 const {status} = require("../utils/status.js")
 const {GenerateAdminAccessToken, GenerateAdminRefreshToken} = require("../utils/index")
+// const path = require("path")
+// const admin = require("firebase-admin");
+
+
 
 const UserLogin = async (req, res) =>{
     // console.log(response)
@@ -177,7 +181,7 @@ const GetOrderByID = async (req, res) =>{
             , o.created_at
             , o.supervisor_observerd
             , o.status
-            , o.disocunt
+            , o.discount
             ,(SELECT json_agg(it) FROM (
                 SELECT 
                     i.name
