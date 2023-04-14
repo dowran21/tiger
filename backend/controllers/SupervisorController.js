@@ -34,7 +34,8 @@ const GetOrders = async (req, res) =>{
         SELECT o.id::text
             , status::integer
             , to_char(o.created_at, 'DD.MM.YYYY') AS created_at
-            , (SELECT sum(price)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
+            , (SELECT sum(price*count)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
+            , o.discount
             , c.name 
         FROM orders o
         INNER JOIN user_sls_mans usm
@@ -43,7 +44,12 @@ const GetOrders = async (req, res) =>{
             ON c.id = o.client_id
     `
     try{
-        const {rows} = await database.query(query_text, [])
+        let {rows} = await database.query(query_text, [])
+        rows = rows.map(item=>{
+            if(item.discount){
+                item.total = (item.total*item.discount)/100
+            }return item
+        })
         return res.status(status.success).json({rows})
     }catch(e){
         console.log(e)
