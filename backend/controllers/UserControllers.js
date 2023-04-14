@@ -228,7 +228,7 @@ const GetOrders = async (req, res) =>{
         SELECT o.id::text
             , status::integer
             , to_char(o.created_at, 'DD.MM.YYYY') AS created_at
-            , (SELECT sum(price)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
+            , (SELECT sum(price*count)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
             , c.name 
         FROM orders o
         INNER JOIN clients c
