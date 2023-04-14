@@ -241,6 +241,7 @@ const GetOrders = async (req, res) =>{
         rows = rows.map(item=>{
             if(item.discount){
                 item.total = (item.total*item.discount)/100
+                item.total = item.total + ""
             }return item
         })
         return res.status(status.success).json({rows})
