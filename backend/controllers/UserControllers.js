@@ -127,8 +127,9 @@ const CreateOrder = async (req, res) =>{
     let {orders} = req.body;
     // orders = orders[0]
     const {id} = req.user
+    let done = false
     console.log(orders)
-    orders.map(async (order) => {
+    for(const order of orders){
         const {products, client_id, created_at, discount} = order;
         const sls_man_id = req.user.id;
         // console.log(req.body)
@@ -137,7 +138,7 @@ const CreateOrder = async (req, res) =>{
             WITH inserted AS (
                 INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount)
                 VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
-                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}
+                    (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::timestamp` : "'now()'"}
                     , ${discount ? discount : null}
                     ) RETURNing *
             ), inserted_products AS (
@@ -167,9 +168,55 @@ const CreateOrder = async (req, res) =>{
         } catch (e) {
             console.log(query_text)
             console.log(e)
-            // continue m;
+            done = true;
+            break;
         }
-    })
+    }
+    // orders.map(async (order) => {
+    //     const {products, client_id, created_at, discount} = order;
+    //     const sls_man_id = req.user.id;
+    //     // console.log(req.body)
+    //     console.log(products, client_id)
+    //     const query_text = `
+    //         WITH inserted AS (
+    //             INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount)
+    //             VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
+    //                 (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::date` : "'now()'"}
+    //                 , ${discount ? discount : null}
+    //                 ) RETURNing *
+    //         ), inserted_products AS (
+    //             INSERT INTO order_items(item_id, order_id, price, count)
+    //             VALUES ${products?.map(item=>`(${item.id}, (SELECT id FROM inserted), (SELECT price FROM items WHERE id = ${item.id}), ${item.count})`)}
+    //         ) SELECT id FROM inserted
+    //     `
+    //     try {
+    //         const {rows} = await database.query(query_text, [])
+    //         const select_query = `
+    //             SELECT * FROM users u 
+    //                 INNER JOIN user_sls_mans usm
+    //                     ON usm.sls_man_id = ${id} AND usm.user_id = u.id 
+    //         `
+    //         const us = await database.query(select_query, [])
+    //         if(us?.rows[0]){
+    //             const user = us?.rows[0]
+    //             const token = user.fcm_token;
+    //             const title = "Sargyt geldi";
+    //             const body = `Sargydy gormegi sizden hayysh edyarin`;
+    //             const data = {title:"hello", body:"hello", destination:"hello"}
+    //             const message = {data, notification: {body, title}}
+    //             const response = await admin.messaging().sendToDevice(token, message)
+    //             console.log(response)
+    //         } 
+    //         console.log(rows[0].id)
+    //     } catch (e) {
+    //         console.log(query_text)
+    //         console.log(e)
+    //         // continue m;
+    //     }
+    // })
+    if(done){
+        return res.status(status.error).send(false)
+    }
     return res.status(status.success).send(true)
         
 }
