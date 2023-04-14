@@ -230,13 +230,19 @@ const GetOrders = async (req, res) =>{
             , to_char(o.created_at, 'DD.MM.YYYY') AS created_at
             , (SELECT sum(price*count)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
             , c.name 
+            , o.dicount
         FROM orders o
         INNER JOIN clients c
             ON c.id = o.client_id 
         WHERE sls_man_id = ${id} AND o.status <> 2
     `
     try {
-        const {rows} = await database.query(query_text, [])
+        let {rows} = await database.query(query_text, [])
+        rows = rows.map(item=>{
+            if(item.discount){
+                item.total = item.total*item.discount/100
+            }return item
+        })
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
