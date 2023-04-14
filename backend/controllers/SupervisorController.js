@@ -45,9 +45,10 @@ const GetOrders = async (req, res) =>{
     `
     try{
         let {rows} = await database.query(query_text, [])
+        console.log(rows)
         rows = rows.map(item=>{
             if(item.discount){
-                item.total = (item.total*item.discount)/100
+                item.total = (item.total*(100-item.discount))/100
             }return item
         })
         return res.status(status.success).json({rows})
