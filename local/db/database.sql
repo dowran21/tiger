@@ -16,7 +16,7 @@ CREATE TABLE firms (
     "name" VARCHAR(150) NOT NULL,
     logical_ref INTEGER NOT NULL,
 
-    -- UNIQUE (code),
+    UNIQUE (code),
     UNIQUE(logical_ref)
 );
 
@@ -45,7 +45,6 @@ CREATE TABLE warehouses (
     "name" VARCHAR(150) NOT NULL,
     logical_ref INTEGER NOT NULL,
 
-    UNIQUE (logical_ref),
     CONSTRAINT firm_id_fk FOREIGN KEY (firm_id) REFERENCES firms(id) ON UPDATE CASCADE ON DELETE CASCADE 
 );
 
@@ -64,6 +63,7 @@ CREATE TABLE measurements (
 CREATE TABLE currency(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     logical_ref INTEGER NOT NULL,
+    firm_id SMALLINT NOT NULL,
     "type" SMALLINT NOT NULL,
     code VARCHAR(15) NOT NULL,
     "name" VARCHAR NOT NULL
@@ -76,8 +76,6 @@ CREATE TABLE categories (
     lowlevelcode INTEGER NOT NULL,
     firm_id INTEGER NOT NULL,
 
-    UNIQUE(logical_ref, firm_id),
-    
     CONSTRAINT firm_id_fk FOREIGN KEY (firm_id) REFERENCES firms(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -90,7 +88,7 @@ CREATE TABLE items (
     measurement_id INTEGER NOT NULL,
     price NUMERIC(7, 2) NOT NULL,
     currency SMALLINT NOT NULL,
-    category_id INTEGER ,
+    category_id INTEGER NOT NULL,
     UNIQUE(firm_id, logical_ref),
 
     CONSTRAINT category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -100,7 +98,7 @@ CREATE TABLE items (
 
 CREATE TABLE wh_items(
     id BIGSERIAL PRIMARY KEY NOT NULL,
-    product_id INTEGER ,
+    product_id INTEGER NOT NULL,
     wh_id INTEGER NOT NULL,
     stock INTEGER NOT NULL,
 
@@ -174,14 +172,14 @@ CREATE TABLE sls_man_clients (
     CONSTRAINT client_id_fk FOREIGN KEY (client_id) REFERENCES clients(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- CREATE TABLE user_sls_mans (
---     id SMALLSERIAL PRIMARY KEY NOT NULL,
---     user_id SMALLINT NOT NULL,
---     sls_man_id SMALLINT NOT NULL,
+CREATE TABLE user_sls_mans (
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    user_id SMALLINT NOT NULL,
+    sls_man_id SMALLINT NOT NULL,
 
---     CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
---     CONSTRAINT sls_man_id_fk FOREIGN KEY (sls_man_id) REFERENCES sales_mans(id) ON UPDATE CASCADE ON DELETE CASCADE
--- );
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT sls_man_id_fk FOREIGN KEY (sls_man_id) REFERENCES sales_mans(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 CREATE TABLE orders (
     id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -193,7 +191,6 @@ CREATE TABLE orders (
     supervisor_id SMALLINT ,
     sls_man_id SMALLINT NOT NULL,
     "status" SMALLINT NOT NULL DEFAULT 0, 
-    delivered BOOLEAN DEFAULT FALSE,
     total INTEGER NOT NULL,
     -- 0 unactive, 1 mod. by supervisor, 3 rejected by moderator, 4 rejected by client after moderate,5 accepted_order  
 

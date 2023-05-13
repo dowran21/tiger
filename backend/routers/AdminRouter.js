@@ -23,4 +23,18 @@ router.post("/add-clietns-to-sls/:id", VerifyAdminAccessToken, VerifyIsAdmin, Ad
 router.post('/delete-client-from-sls-man/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.DeleteClientFromSls)
 router.post('/change-sls-firm/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangeSlsManFirm)
 
+router.post("/migrations", VerifyAdminAccessToken, VerifyIsAdmin, AdminController.Migrations)
+
+router.get("/get-orders", AdminController.GetOrders);
+
+router.post("/firm-migrate", AdminController.FirmMigrations);
+router.post("/wh-migrate", AdminController.WareHouseMigration)
+router.post("/unit-migrate", AdminController.UnitMigrations)
+router.post("/currency-migrate", AdminController.CurrencyMigrations)
+router.post("/category-migrate", AdminController.CategoryMigrations)
+router.post("/item-migrate", AdminController.AddItems);
+router.post("/stock-migrate", AdminController.StockMigrate)
+router.post("/client-migrate", AdminController.ClientMigrations);
+router.post("/sls-man-migrate", AdminController.SLSManMigration)
+
 module.exports = router

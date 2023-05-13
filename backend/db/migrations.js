@@ -62,7 +62,7 @@ const Migrations = async () =>{
                 let insert_units_query = `
                     INSERT INTO measurements (measurement, measure_code, firm_id, unitsetref, linenr) VALUES
                     ${insert_units.map(item =>`('${item.NAME}', '${item.CODE}', ${firm.id}, ${item.UNITSETREF}, ${item.LINENR})` )} 
-                    `
+                `
                 // await database.query(insert_units_query, [])
             } catch (e) {
                 console.log(e)
@@ -131,8 +131,8 @@ const Migrations = async () =>{
                 const insert_clients = `
                     INSERT INTO clients (logical_ref, phone_number, address, card_type, firm_id, code, name)
                     VALUES ${clients.map(item => `
-                        (${item.LOGICALREF}, ${item.TELNR1 ? `'${item.TELNR1.replaceAll("'", "''")}'` :`NULL` }, ${item.ADDR1 ? `'${item.ADDR1.replaceAll("'", "''")}'` :`NULL` }
-                        , ${item.CARDTYPE}, ${firm.id}, '${item.CODE?.replaceAll("'", "''")}', '${item.DEFINITION_.replaceAll("'", "''")}'
+                        (${item.LOGICALREF}, ${item.TELNR1 ? `'${item.TELNRS1.replaceAll("'", "''")}'` :`NULL` }, ${item.ADDR1 ? `'${item.ADDR1?.replaceAll("'", "''")}'` :`NULL` }
+                        , ${item.CARDTYPE}, ${firm.id}, '${item.CODE?.replaceAll("'", "''")}', '${item.DEFINITION_?.replaceAll("'", "''")}'
                         )
                     `).join(",")}
                 `
@@ -300,7 +300,7 @@ const SelectMigrations = async ()=>{
         const add_category = `
             INSERT INTO categories (name, logical_ref, lowlevelcode) VALUES 
             ${data?.map(item=> `('${item.NAME}', ${item.LOGICALREF}, ${item.LOWLEVELCODES1} )`)}    
-     `
+        `
      try {
         await database.query(add_category, [])
      } catch (e) {

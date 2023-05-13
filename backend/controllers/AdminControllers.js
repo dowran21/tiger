@@ -321,6 +321,414 @@ const ChangeSlsManFirm = async (req, res) =>{
     }
 }
 
+const FirmMigrations = async (req, res) =>{
+    const {firms} = req.body;
+    // console.log(firms)
+    const query_text = `
+        INSERT INTO firms (code, name, logical_ref  )
+        VALUES ${firms.map(item=>`(${item.NR}, '${item.NAME}', ${item.LOGICALREF})`).join(",")}
+        ON CONFLICT (logical_ref) DO NOTHING 
+    `
+    try{
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    }catch(e){
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const WareHouseMigration = async (req, res) =>{
+    const {wh} = req.body;
+    
+    const query_text = `
+        INSERT INTO warehouses(code, firm_id, name, logical_ref) VALUES 
+        ${wh.map(item=> `(${item.NR}, (SELECT id FROM firms WHERE code = ${item.FIRMNR}), '${item.NAME}', ${item.LOGICALREF})`)}
+        ON CONFLICT (logical_ref) DO NOTHING
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const UnitMigrations = async (req, res) =>{
+    const {units} = req.body;
+    // console.log(units)
+    let insert_units_query = `
+        INSERT INTO measurements (measurement, measure_code, firm_id, unitsetref, linenr) VALUES
+        ${units.map(item =>`('${item.NAME}', '${item.CODE}', 
+            (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref}), ${item.UNITSETREF}, ${item.LINENR})` 
+            ).join(",")} 
+    `
+    try {
+        console.log(insert_units_query)
+        await database.query(insert_units_query, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
+const CurrencyMigrations = async (req, res) =>{
+    const {currencies} = req.body;
+    const query_text = `
+        INSERT INTO currency(logical_ref,  type, code, name)
+        VALUES ${currencies.map(item=>`(${item.LOGICALREF},  ${item.CURTYPE}, '${item.CURCODE}', '${item.CURNAME}' )`).join(",")}
+    `
+    try {
+        console.log(query_text)
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const CategoryMigrations = async (req, res) =>{
+    const {categories} = req.body;
+    const query_text = `    
+        INSERT INTO categories (name, logical_ref, lowlevelcode, firm_id) VALUES 
+        ${categories?.map(item=> `('${item.NAME}', ${item.LOGICALREF}, ${item.LOWLEVELCODES1}, 
+        (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref})
+        )`).join(",")}    
+        ON CONFLICT (firm_id, logical_ref) DO NOTHING 
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const AddItems = async (req, res) =>{
+    const {items} = req.body;
+    const query_text = `
+        INSERT INTO items (code, logical_ref, name, firm_id, measurement_id, category_id, price, currency) VALUES 
+        ${items.map(item => `('${item.CODE}', ${item.LOGICALREF}, '${item.NAME}', \
+        (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref}), 
+        (SELECT m.id FROM measurements m WHERE m.unitsetref = ${item.UNITSETREF} AND firm_id = (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref})), 
+        (SELECT id FROM categories WHERE lowlevelcode = ${item.LOWLEVELCODES1} ), ${item.PRICE}, 
+        (SELECT id FROM currency WHERE type = ${item.CURRENCY} LIMIT 1))
+        `).join(",")}
+        ON CONFLICT (firm_id, logical_ref) DO UPDATE SET category_id = EXCLUDED.category_id, price = EXCLUDED.price
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const StockMigrate = async (req, res) =>{
+    const {stocks} = req.body;
+    const query_text = `
+        INSERT INTO wh_items(product_id, wh_id, stock)
+        VALUES ${stocks?.map(item=>`
+        ((SELECT i.id FROM items i WHERE i.logical_ref = ${item.STOCKREF} 
+                AND i.firm_id = (SELECT f.id FROM firms f WHERE f.logical_ref = ${item.firm_logical_ref} )),
+            (SELECT w.id FROM warehouses w WHERE w.code = ${item.INVENNO} AND w.firm_id = (SELECT f.id FROM firms f WHERE f.logical_ref = ${item.firm_logical_ref} )),
+            ${item.ONHAND}
+        )
+        `).join(",")}
+        ON CONFLICT (product_id, wh_id) DO UPDATE SET stock = EXCLUDED.stock
+    `
+    try {
+        // console.log(query_text)
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetOrders = async (req, res) =>{
+    console.log('hello')
+    const query_text = `
+        SELECT 
+            o.id
+            , (SELECT c.logical_ref FROM clients c WHERE c.id = o.client_id) AS client_ref
+            , (SELECT sm.logical_ref FROM sales_mans sm WHERE sm.id = o.sls_man_id) AS sales_man_ref
+            , (SELECT f.code FROM firms f WHERE f.id = o.firm_id) AS firm_code
+            , o.discount
+            , (SELECT sum(price*count)::text FROM order_items oi WHERE oi.order_id = o.id) AS total
+            , (SELECT json_agg(ite) FROM (
+                SELECT 
+                    i.logical_ref
+                    , oi.price 
+                    , oi.count
+                FROM order_items oi
+                    INNER JOIN items i
+                        ON i.id = oi.item_id AND i.firm_id = o.firm_id
+                WHERE oi.order_id = o.id
+            )ite) AS items
+        FROM orders o
+        WHERE o.status = 2 AND delivered = false
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        if(rows?.length){
+            await database.query(`UPDATE orders SET delivered = true WHERE id IN (${rows?.map(item=>item.id).join(",")})`);
+        }
+        return res.status(status.success).json({rows:rows.filter(item=>item.items?.length)})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const Migrations = async (req, res) =>{
+    const discount = 150;
+    const client = 16
+    const accountRef = 337
+    const discounted = 337
+    const grostotal = 1770
+    const nettotal = 5400
+    const sales_man_ref = 5;
+    const trnet = 3;
+    const insert_query = `
+    INSERT INTO LG_001_01_ORFICHE 
+    (
+        "LOGICALREF"
+        ,"TRCODE"
+        ,"FICHENO"
+        ,"DATE_"
+        ,"TIME_"
+        ,"DOCODE"
+        ,"SPECODE"
+        ,"CYPHCODE"
+        ,"CLIENTREF"
+        ,"RECVREF"
+        ,"ACCOUNTREF"
+        ,"CENTERREF"
+        ,"SOURCEINDEX"
+        ,"SOURCECOSTGRP"
+        ,"UPDCURR"
+        ,"ADDDISCOUNTS"
+        ,"TOTALDISCOUNTS"
+        ,"TOTALDISCOUNTED"
+        ,"ADDEXPENSES"
+        ,"TOTALEXPENSES"
+        ,"TOTALPROMOTIONS"
+        ,"TOTALVAT"
+        ,"GROSSTOTAL"
+        ,"NETTOTAL"
+        ,"REPORTRATE"
+        ,"REPORTNET"
+        ,"GENEXP1"
+        ,"GENEXP2"
+        ,"GENEXP3"
+        ,"GENEXP4"
+        ,"EXTENREF"
+        ,"PAYDEFREF"
+        ,"PRINTCNT"
+        ,"BRANCH"
+        ,"DEPARTMENT"
+        ,"STATUS"
+        ,"CAPIBLOCK_CREATEDBY"
+        ,"CAPIBLOCK_CREADEDDATE"
+        ,"CAPIBLOCK_CREATEDHOUR"
+        ,"CAPIBLOCK_CREATEDMIN"
+        ,"CAPIBLOCK_CREATEDSEC"
+        ,"CAPIBLOCK_MODIFIEDBY"
+        ,"CAPIBLOCK_MODIFIEDDATE"
+        ,"CAPIBLOCK_MODIFIEDHOUR"
+        ,"CAPIBLOCK_MODIFIEDMIN"
+        ,"CAPIBLOCK_MODIFIEDSEC"
+        ,"SALESMANREF"
+        ,"SHPTYPCOD"
+        ,"SHPAGNCOD"
+        ,"GENEXCTYP"
+        ,"LINEEXCTYP"
+        ,"TRADINGGRP"
+        ,"TEXTINC"
+        ,"SITEID"
+        ,"RECSTATUS"
+        ,"ORGLOGICREF"
+        ,"FACTORYNR"
+        ,"WFSTATUS"
+        ,"SHIPINFOREF"
+        ,"CUSTORDNO"
+        ,"SENDCNT"
+        ,"DLVCLIENT"
+        ,"DOCTRACKINGNR"
+        ,"CANCELLED"
+        ,"ORGLOGOID"
+        ,"OFFERREF"
+        ,"OFFALTREF"
+        ,"TYP"
+        ,"ALTNR"
+        ,"ADVANCEPAYM"
+        ,"TRCURR"
+        ,"TRRATE"
+        ,"TRNET"
+        ,"PAYMENTTYPE"
+        ,"ONLYONEPAYLINE"
+        ,"OPSTAT"
+        ,"WITHPAYTRANS"
+        ,"PROJECTREF"
+        ,"WFLOWCRDREF"
+        ,"UPDTRCURR"
+        ,"AFFECTCOLLATRL"
+        ,"POFFERBEGDT"
+        ,"POFFERENDDT"
+        ,"REVISNR"
+        ,"LASTREVISION"
+        ,"CHECKAMOUNT"
+        ,"SLSOPPRREF"
+        ,"SLSACTREF"
+        ,"SLSCUSTREF"
+        ,"AFFECTRISK"
+        ,"TOTALADDTAX"
+        ,"TOTALEXADDTAX"
+        ,"APPROVE"
+        ,"APPROVEDATE"
+    )
+    VALUES (
+        (SELECT MAX(LASTREF) FROM LG_001_01_ORFICHESEQ WHERE ID = 1 ) + 1,
+        1,
+        000000000000000005,
+        SYSDATETIME(),
+        'DENEME-01',
+        NULL,
+        NULL,
+        ${client},
+        0,
+        ${accountRef},
+        0,
+        0,
+        0,
+        0,
+        ${discount},
+        ${discount},
+        ${discounted},
+        0,
+        0,
+        0,
+        0,
+        0,
+        ${grostotal},
+        ${nettotal},
+        0,
+        0,
+        null,
+        null,
+        null,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        SYSDATETIME(),
+        18,
+        19,
+        34,
+        0,
+        null,
+        0,
+        0,
+        0,
+        ${sales_man_ref},
+        null,
+        null,
+        1,
+        0,
+        null,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        null,
+        0,
+        null,
+        0, 
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        ${trnet},
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        NULL,
+        NULL,
+        '',
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        NULL     
+    `
+    console.log(query_text)
+}
+
+const ClientMigrations = async (req, res) =>{
+    const {clients} = req.body;
+    const insert_clients = `
+                    INSERT INTO clients (logical_ref, phone_number, address, card_type, firm_id, code, name)
+                    VALUES ${clients.map(item => `
+                        (${item.LOGICALREF}, ${item.TELNR1 ? `'${item.TELNR1.replaceAll("'", "''")}'` :`NULL` }, ${item.ADDR1 ? `'${item.ADDR1?.replaceAll("'", "''")}'` :`NULL` }
+                        , ${item.CARDTYPE}, (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref}), '${item.CODE?.replaceAll("'", "''")}', '${item.DEFINITION_?.replaceAll("'", "''")}'
+                        )
+                    `).join(",")}
+                `
+    try {
+        // console.log(insert_clients)
+        await database.query(insert_clients, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const SLSManMigration = async (req, res) =>{
+    const {sls_mans} = req.body;
+    const insert_query = `
+        INSERT INTO sales_mans (logical_ref, code, name, spec_code) 
+        VALUES ${sls_mans.map(item=>`(${item.LOGICALREF}, '${item.CODE}', '${item.DEFINITION_}', '${item.SPECODE}' )`).join(",")}
+    `
+    try {
+        await database.query(insert_query, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
 module.exports = {
     Login,
     LoadAdmin,
@@ -339,5 +747,16 @@ module.exports = {
     GetSlsManClients,
     AddClientsToSlsMan,
     DeleteClientFromSls,
-    ChangeSlsManFirm
+    ChangeSlsManFirm,
+    CategoryMigrations,
+    Migrations,
+    FirmMigrations,
+    GetOrders,
+    WareHouseMigration,
+    UnitMigrations,
+    CurrencyMigrations,
+    AddItems,
+    StockMigrate,
+    ClientMigrations,
+    SLSManMigration
 }
