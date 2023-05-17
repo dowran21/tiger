@@ -139,10 +139,10 @@ const CreateOrder = async (req, res) =>{
         console.log(products, client_id)
         const query_text = `
             WITH inserted AS (
-                INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount)
+                INSERT INTO orders (client_id, firm_id, supervisor_id, sls_man_id, status, created_at, discount, total)
                 VALUES (${client_id}, (SELECT firm_id FROM sls_man_firms WHERE sls_man_id = ${sls_man_id} LIMIT 1), 
                     (SELECT user_id FROM user_sls_mans WHERE sls_man_id = ${sls_man_id}), ${sls_man_id}, 0, ${created_at ? `'${created_at}'::timestamp` : "'now()'"}
-                    , ${discount ? discount : null}
+                    , ${discount ? discount : null}, 0
                     ) RETURNing *
             ), inserted_products AS (
                 INSERT INTO order_items(item_id, order_id, price, count)
