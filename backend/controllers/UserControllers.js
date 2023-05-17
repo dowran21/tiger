@@ -88,7 +88,7 @@ const GetProducts = async (req, res)=>{
     }
     const user_id = req.user?.id;
     const query_text = `
-        SELECT i.name, i.code, m.measurement, price, wi.stock,  i.id::integer, 0::integer AS count
+        SELECT i.name, i.code, m.measurement, price, wi.stock::integer,  i.id::integer, 0::integer AS count
         FROM items i
             INNER JOIN measurements m
                 ON m.id = i.measurement_id AND i.firm_id = m.firm_id
