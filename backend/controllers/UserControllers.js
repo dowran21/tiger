@@ -95,7 +95,7 @@ const GetProducts = async (req, res)=>{
             INNER JOIN currency c
                 ON c.id = i.currency AND c.firm_id = i.firm_id
             INNER JOIN sls_man_whs smw
-                ON smw.sls_man_id = s.id
+                ON smw.sls_man_id = ${user_id}
             INNER JOIN wh_items wi
                 ON wi.product_id = i.id AND smw.wh_id = w.id 
             INNER JOIN sls_man_firms sl
