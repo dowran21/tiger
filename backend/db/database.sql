@@ -194,6 +194,7 @@ CREATE TABLE orders (
     sls_man_id SMALLINT NOT NULL,
     "status" SMALLINT NOT NULL DEFAULT 0, 
     delivered BOOLEAN DEFAULT FALSE,
+    discount INTEGER,
     total INTEGER NOT NULL,
     -- 0 unactive, 1 mod. by supervisor, 3 rejected by moderator, 4 rejected by client after moderate,5 accepted_order  
 

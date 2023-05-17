@@ -414,9 +414,9 @@ const AddItems = async (req, res) =>{
     const query_text = `
         INSERT INTO items (code, logical_ref, name, firm_id, measurement_id, category_id, price, currency) VALUES 
         ${items.map(item => `('${item.CODE}', ${item.LOGICALREF}, '${item.NAME}', \
-        (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref}), 
-        (SELECT m.id FROM measurements m WHERE m.unitsetref = ${item.UNITSETREF} AND firm_id = (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref})), 
-        (SELECT id FROM categories WHERE lowlevelcode = ${item.LOWLEVELCODES1} ), ${item.PRICE}, 
+        (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref} LIMIT 1), 
+        (SELECT m.id FROM measurements m WHERE m.unitsetref = ${item.UNITSETREF} AND firm_id = (SELECT id FROM firms WHERE logical_ref = ${item.firm_logical_ref}) LIMIT 1), 
+        (SELECT id FROM categories WHERE lowlevelcode = ${item.LOWLEVELCODES1} LIMIT 1), ${item.PRICE}, 
         (SELECT id FROM currency WHERE type = ${item.CURRENCY} LIMIT 1))
         `).join(",")}
         ON CONFLICT (firm_id, logical_ref) DO UPDATE SET category_id = EXCLUDED.category_id, price = EXCLUDED.price

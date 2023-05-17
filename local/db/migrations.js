@@ -32,11 +32,11 @@ const UnitsMigrations = async () =>{
     try {
         const result = await ms_db.query(ms_query_1);
         const firms = result.recordset;
-        console.log(firms)
+        // console.log(firms)
         let insert_units = []
         for await (const firm of firms){
             let nr = firm.NR < 10 ? `00`+firm.NR : firm.NR < 100 ? `0`+firm.NR : firm.NR
-            console.log(nr)
+            // console.log(nr)
             const select_units = `
                SELECT DISTINCT UNITSETREF, NAME, LOGICALREF, CODE, LINENR
                FROM LG_${nr}_UNITSETL
@@ -45,7 +45,7 @@ const UnitsMigrations = async () =>{
                 const resp = await ms_db.query(select_units);
                 const units = resp.recordset
                 let arr = [];
-                console.log(units)
+                // console.log(units)
                 for await (const unit of units ){
                     // if(!arr.includes(unit.UNITSETREF)){
                         // arr.push(unit.UNITSETREF);
@@ -411,9 +411,9 @@ const CreateOrder = async (orders) =>{
         `
         try {
             const resp = await ms_db.query(query_text);
-            console.log(resp)
+            // console.log(resp)
             const result = resp.recordset;
-            console.log(result)
+            // console.log(result)
             const logicalRef = result[0].LOGICALREF
             const count = 15;
             // const price = 150
@@ -723,7 +723,7 @@ const CreateOrder = async (orders) =>{
                     0
                 );
             `).join(";")
-            console.log(insert_line)
+            // console.log(insert_line)
             await ms_db.query(insert_line)
         } catch (e) {
             console.log(e)

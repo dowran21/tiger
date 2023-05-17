@@ -15,7 +15,7 @@ const cron = require("node-cron");
 const GetOrders = async ()=>{
     const response = await axios({
         method:"get",
-        url:"http://216.250.9.138:4003/api/admin/get-orders",
+        url:"http://localhost:5003/api/admin/get-orders",
 
     })
     await CreateOrder(response.data.rows)
@@ -29,9 +29,9 @@ task.start()
 const MigrateFirms = async ()=>{
     // console.log("hello")
     const firms = await FirmMigrations()
-    await axios({
+     axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/firm-migrate",
+        url:"http://localhost:5003/api/admin/firm-migrate",
         data:{firms}
     })
 }
@@ -39,9 +39,9 @@ const MigrateFirms = async ()=>{
 const WhMigrations = async ()=>{
     // console.log("hello wh");
     const wh = await WareHouses()
-    await axios({
+     axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/wh-migrate",
+        url:"http://localhost:5003/api/admin/wh-migrate",
         data:{wh}
     })
 }
@@ -50,9 +50,9 @@ const UnitMigrate = async ()=>{
     console.log("hello unit");
     const units = await UnitsMigrations();
     // console.log(units)
-    await axios({
+     axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/unit-migrate",
+        url:"http://localhost:5003/api/admin/unit-migrate",
         data:{units}
     })
 }
@@ -61,9 +61,9 @@ const CurrencyMigrate = async (req, res) =>{
     // console.log("hell om");
     const currencies = await CurrencyMigrations()
     // console.log(currencies)
-    await axios({
+     axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/currency-migrate",
+        url:"http://localhost:5003/api/admin/currency-migrate",
         data:{currencies}
     })
 }
@@ -71,9 +71,9 @@ const CurrencyMigrate = async (req, res) =>{
 const CategoryMigrations = async (req, res) =>{
     console.log("categories -- hello")
     const categories = await CategoriesMigrations();
-    await axios({
+    axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/category-migrate",
+        url:"http://localhost:5003/api/admin/category-migrate",
         data:{categories}
     })
 }
@@ -82,9 +82,9 @@ const ItemMigrate = async (req, res) =>{
     console.log("sdkfhdk s");
     const items = await ItemsMigrations();
     // console.log(items)
-    await axios({
+    axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/item-migrate",
+        url:"http://localhost:5003/api/admin/item-migrate",
         data:{items}
     })
 }
@@ -92,9 +92,9 @@ const ItemMigrate = async (req, res) =>{
 const StockMigrate = async (req, res) =>{
     const stocks = await GetStock();
     // console.log(stocks)
-    await axios({
+    axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/stock-migrate",
+        url:"http://localhost:5003/api/admin/stock-migrate",
         data:{stocks}
     })
 } 
@@ -102,35 +102,45 @@ const StockMigrate = async (req, res) =>{
 const GetClient = async ()=>{
     const clients = await GetClients();
     // console.log(clients);
-    await axios({
+    axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/client-migrate",
+        url:"http://localhost:5003/api/admin/client-migrate",
         data:{clients:clients.filter(item=>item.CODE !== 'я')}
     })
 }
 
 const SalesManMigrate = async ()=>{
     const sls_mans = await SalesMansMigrate();
-    await axios({
+    axios({
         method:"post",
-        url:"http://216.250.9.138:4003/api/admin/sls-man-migrate",
+        url:"http://localhost:5003/api/admin/sls-man-migrate",
         data:{sls_mans}
     })
 }
 
-MigrateFirms();
+try {
+    MigrateFirms();
 WhMigrations();
 CurrencyMigrate();
 UnitMigrate()
 
 CurrencyMigrate()
+} catch (e) {
+    
+}
+
 // task.start();;
 const task_2 = cron.schedule("* * * * *", async ()=>{
-    ItemMigrate()
-    SalesManMigrate()
-    GetClient()
-    StockMigrate()
-    CategoryMigrations()
+    try {
+        ItemMigrate()
+        SalesManMigrate()
+        GetClient()
+        StockMigrate()
+        CategoryMigrations()
+    } catch (error) {
+        
+    }
+    
 })
 
 task_2.start()
