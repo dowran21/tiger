@@ -745,7 +745,15 @@ const GetClients = async (req, res) =>{
             let nr = firm.NR < 10 ? `00`+firm.NR : firm.NR < 100 ? `0`+firm.NR : firm.NR
             // console.log(nr)
             const select_currency = `
-                SELECT LOGICALREF, CARDTYPE, TELNRS1, ADDR1, CODE, ${firm.LOGICALREF} AS firm_logical_ref FROM LG_${nr}_CLCARD
+                SELECT 
+                    LOGICALREF
+                    , CARDTYPE
+                    , TELNRS1
+                    , ADDR1
+                    , CODE
+                    , DEFINITION_
+                    , ${firm.LOGICALREF} AS firm_logical_ref 
+                FROM LG_${nr}_CLCARD
             `    
             try {
                 const resp = await ms_db.query(select_currency);

@@ -529,15 +529,14 @@ const Migrations = async (req, res) =>{
 
 Migrations()
 
-SELECT i.name, i.code, m.measurement, price, wi.stock::integer,  i.id::integer, 0::integer AS count
+SELECT i.name, i.code, price, wi.stock::integer,  i.id::integer, 0::integer AS count
         FROM items i
-            INNER JOIN measurements m
-                ON m.id = i.measurement_id AND i.firm_id = m.firm_id
-            INNER JOIN sls_man_firms sl
-                ON sl.firm_id = i.firm_id AND sl.sls_man_id = 1
             INNER JOIN sls_man_whs smw
                 ON smw.sls_man_id = 1
             INNER JOIN wh_items wi
-                ON wi.product_id = i.id AND smw.wh_id = wi.id 
+                ON wi.product_id = i.id  AND smw.wh_id = wi.wh_id
+           
+            
+
             
             WHERE i.id > 0 

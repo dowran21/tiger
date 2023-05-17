@@ -95,7 +95,7 @@ const GetProducts = async (req, res)=>{
             INNER JOIN sls_man_whs smw
                 ON smw.sls_man_id = ${user_id}
             INNER JOIN wh_items wi
-                ON wi.product_id = i.id AND smw.wh_id = wi.id 
+                ON wi.product_id = i.id AND smw.wh_id = wi.wh_id 
             INNER JOIN sls_man_firms sl
                 ON sl.firm_id = i.firm_id AND sl.sls_man_id = ${user_id}
             WHERE i.id > 0 ${wherePart}

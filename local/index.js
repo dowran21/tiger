@@ -122,23 +122,24 @@ const SalesManMigrate = async ()=>{
 ItemMigrate()
 
 WhMigrations();
-
+SalesManMigrate()
 try {
-    MigrateFirms();
-CurrencyMigrate();
-UnitMigrate()
+    // MigrateFirms();
+// CurrencyMigrate();
+// UnitMigrate()
 
-CurrencyMigrate()
+// CurrencyMigrate()
 } catch (e) {
     
 }
 StockMigrate()
+// GetClient()
 // task.start();;
 const task_2 = cron.schedule("* * * * *", async ()=>{
     try {
         ItemMigrate()
         SalesManMigrate()
-        GetClient()
+        // GetClient()
         StockMigrate()
         CategoryMigrations()
     } catch (error) {
