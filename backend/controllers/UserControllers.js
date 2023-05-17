@@ -164,7 +164,9 @@ const CreateOrder = async (req, res) =>{
                 const body = `Sargydy gormegi sizden hayysh edyarin`;
                 const data = {title:"hello", body:"hello", destination:"hello"}
                 const message = {data, notification: {body, title}}
-                const response = await admin.messaging().sendToDevice(token, message)
+                if(token){
+                    const response = await admin.messaging().sendToDevice(token, message)
+                }
                 console.log(response)
             } 
             console.log(rows[0].id)
