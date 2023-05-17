@@ -167,7 +167,7 @@ const CreateOrder = async (req, res) =>{
                 if(token){
                     const response = await admin.messaging().sendToDevice(token, message)
                 }
-                console.log(response)
+                // console.log(response)
             } 
             console.log(rows[0].id)
         } catch (e) {
