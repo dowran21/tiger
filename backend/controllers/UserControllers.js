@@ -313,7 +313,7 @@ const EditOrder = async (req, res) =>{
 
 const GetCategories = async (req, res) =>{
     const query_text = `
-        SELECT * FROM categories
+        SELECT c.*, (SELECT COUNT(*) FROM items WHERE category_id = c.id)::integer  AS on_hand FROM categories c
     `
     try {
         const {rows} = await database.query(query_text, [])
