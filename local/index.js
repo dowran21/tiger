@@ -15,7 +15,7 @@ const cron = require("node-cron");
 const GetOrders = async ()=>{
     const response = await axios({
         method:"get",
-        url:"http://localhost:5003/api/admin/get-orders",
+        url:"http://216.250.9.138:4003/api/admin/get-orders",
 
     })
     await CreateOrder(response.data.rows)
@@ -31,7 +31,7 @@ const MigrateFirms = async ()=>{
     const firms = await FirmMigrations()
      axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/firm-migrate",
+        url:"http://216.250.9.138:4003/api/admin/firm-migrate",
         data:{firms}
     })
 }
@@ -41,7 +41,7 @@ const WhMigrations = async ()=>{
     const wh = await WareHouses()
      axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/wh-migrate",
+        url:"http://216.250.9.138:4003/api/admin/wh-migrate",
         data:{wh}
     })
 }
@@ -52,7 +52,7 @@ const UnitMigrate = async ()=>{
     // console.log(units)
      axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/unit-migrate",
+        url:"http://216.250.9.138:4003/api/admin/unit-migrate",
         data:{units}
     })
 }
@@ -63,7 +63,7 @@ const CurrencyMigrate = async (req, res) =>{
     // console.log(currencies)
      axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/currency-migrate",
+        url:"http://216.250.9.138:4003/api/admin/currency-migrate",
         data:{currencies}
     })
 }
@@ -73,7 +73,7 @@ const CategoryMigrations = async (req, res) =>{
     const categories = await CategoriesMigrations();
     axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/category-migrate",
+        url:"http://216.250.9.138:4003/api/admin/category-migrate",
         data:{categories}
     })
 }
@@ -84,7 +84,7 @@ const ItemMigrate = async (req, res) =>{
     // console.log(items)
     axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/item-migrate",
+        url:"http://216.250.9.138:4003/api/admin/item-migrate",
         data:{items}
     })
 }
@@ -94,7 +94,7 @@ const StockMigrate = async (req, res) =>{
     // console.log(stocks)
     axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/stock-migrate",
+        url:"http://216.250.9.138:4003/api/admin/stock-migrate",
         data:{stocks}
     })
 } 
@@ -104,23 +104,25 @@ const GetClient = async ()=>{
     // console.log(clients);
     axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/client-migrate",
+        url:"http://216.250.9.138:4003/api/admin/client-migrate",
         data:{clients:clients.filter(item=>item.CODE !== 'я')}
     })
 }
 
 const SalesManMigrate = async ()=>{
     const sls_mans = await SalesMansMigrate();
+    console.log("sales man migrate")
     axios({
         method:"post",
-        url:"http://localhost:5003/api/admin/sls-man-migrate",
+        url:"http://216.250.9.138:4003/api/admin/sls-man-migrate",
         data:{sls_mans}
     })
 }
 
+WhMigrations();
+
 try {
     MigrateFirms();
-WhMigrations();
 CurrencyMigrate();
 UnitMigrate()
 
