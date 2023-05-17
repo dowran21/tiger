@@ -119,6 +119,8 @@ const SalesManMigrate = async ()=>{
     })
 }
 
+ItemMigrate()
+
 WhMigrations();
 
 try {
@@ -130,7 +132,7 @@ CurrencyMigrate()
 } catch (e) {
     
 }
-
+StockMigrate()
 // task.start();;
 const task_2 = cron.schedule("* * * * *", async ()=>{
     try {
