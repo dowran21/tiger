@@ -378,8 +378,8 @@ const UnitMigrations = async (req, res) =>{
 const CurrencyMigrations = async (req, res) =>{
     const {currencies} = req.body;
     const query_text = `
-        INSERT INTO currency(logical_ref,  type, code, name)
-        VALUES ${currencies.map(item=>`(${item.LOGICALREF},  ${item.CURTYPE}, '${item.CURCODE}', '${item.CURNAME}' )`).join(",")}
+        INSERT INTO currency(logical_ref,  type, code, name, firm_id)
+        VALUES ${currencies.map(item=>`(${item.LOGICALREF},  ${item.CURTYPE}, '${item.CURCODE}', '${item.CURNAME}', (SELECT id FROM firms WHERE code = ${item.FIRMNR}) )`).join(",")}
     `
     try {
         console.log(query_text)

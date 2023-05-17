@@ -65,6 +65,7 @@ CREATE TABLE currency(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     logical_ref INTEGER NOT NULL,
     "type" SMALLINT NOT NULL,
+    firm_id INTEGER NOT NULL DEFAULT 1,
     code VARCHAR(15) NOT NULL,
     "name" VARCHAR NOT NULL
 );
