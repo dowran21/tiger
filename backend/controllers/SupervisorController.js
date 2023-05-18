@@ -164,7 +164,7 @@ const GetProducts = async (req, res)=>{
     }
     const user_id = req.user?.id;
     const query_text = `
-        SELECT i.name, i.code, m.measurement, price, (SELECT SUM(wh.stock) FROM wh_items wh WHERE wh.item_id = i.id):: integer AS stock, i.id::integer, 0::integer AS count
+        SELECT i.name, i.code, m.measurement, price, (SELECT SUM(wh.stock) FROM wh_items wh WHERE wh.product_id = i.id):: integer AS stock, i.id::integer, 0::integer AS count
         FROM items i
             INNER JOIN measurements m
                 ON m.id = i.measurement_id AND i.firm_id = m.firm_id
