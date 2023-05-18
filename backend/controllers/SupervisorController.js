@@ -68,12 +68,12 @@ const UpdateOrder = async (req, res) =>{
     console.log(products)
     const query_text = `
         WITH updated_order AS(
-            UPDATE orders SET status = ${status_id} , discount = ${discount} WHERE id = ${id}
-         ) ${products?.length ? "," : ""} ${products?.map((item, index)=>`
+            UPDATE orders SET status = ${status_id} , discount = ${discount ? discount : null} WHERE id = ${id}
+         ) ${products?.length ? "," : ""} ${products?.length ? products?.map((item, index)=>`
             updated${index} AS (
                 UPDATE order_items SET supervisor_count = ${item.sp_count} WHERE id = ${item.order_item_id}
             )
-        `).join(",")}
+        `).join(",") : ""}
          SELECT 1
     `
     try {
